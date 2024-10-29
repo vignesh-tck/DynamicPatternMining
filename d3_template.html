@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .tooltip {
+            position: absolute;
+            background-color: white;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            pointer-events: none;
+            font-size: 12px;
+            visibility: hidden;
+        }
+        .country {
+            stroke: #666;
+            stroke-width: 0.5px;
+        }
+        .country:hover {
+            stroke: #000;
+            stroke-width: 1.5px;
+        }
+        .legend {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+            width: 150px;
+            height: auto;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+        }
+        .chart-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chart-title">{{title}}</div>
+    <div id="chart"></div>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="legend" id="legend">
+    <strong>Legend</strong><br>
+    <div class="legend-item"><div class="legend-color" style="background-color: #08306b;"></div>High Value</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #4292c6;"></div>Medium Value</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #c6dbef;"></div>Low Value</div>
+    <div class="legend-item"><div class="legend-color" style="background-color: #ccc;"></div>No Data</div>
+    </div>
+    <script>
+        // Setting up dimensions for the chart
+        const width = 750;
+        const height = 500;
+
+        // Data from Python, dynamically passed in
+        const data = {{data}};
+
+        // GeoJSON data for demonstration (You should replace it with real GeoJSON data)
+        const geoJson = {{geoJson}};  // Load GeoJSON data
+
+        // Append SVG to the chart div
+        const svg = d3.select("#chart")
+                      .append("svg")
+                      .attr("width", width)
+                      .attr("height", height)
+                      .call(d3.zoom().on("zoom", function (event) {
+                          svg.attr("transform", event.transform);
+                      }))
+                      .append("g");
+
+        // Set up projection and path for the map
+        const projection = d3.geoMercator()
+            .scale(120)
+            .translate([width / 2, height / 1.5]);
+
+        const path = d3.geoPath().projection(projection);
+
+        // Set up color scale
+        const colorScale = d3.scaleSequential()
+            .domain([0, d3.max(Object.values(data))])
+            .interpolator(d3.interpolateBlues);
+
+        // Tooltip setup
+        const tooltip = d3.select("#tooltip");
+
+        // Draw the map
+        svg.selectAll("path")
+            .data(geoJson.features)
+            .enter()
+            .append("path")
+            .attr("d", path)
+            .attr("class", "country")
+            .attr("fill", function(d) {
+                const value = data[d.properties.name];
+                return value ? colorScale(value) : "#ccc";
+            })
+            .on("mouseover", function(event, d) {
+                const value = data[d.properties.name];
+                tooltip.style("visibility", "visible")
+                       .html("<strong>Country:</strong> " + d.properties.name + "<br/><strong>Value:</strong> " + (value !== undefined ? value : 'N/A'));
+                       d3.select(this).style("stroke", "#000").style("stroke-width", "2px");
+            })
+            .on("mousemove", function(event) {
+                tooltip.style("top", (event.clientY + 10) + "px")
+                       .style("left", (event.clientX + 10) + "px");
+            })
+            .on("mouseout", function() {
+                tooltip.style("visibility", "hidden");
+                d3.select(this).style("stroke", "#666").style("stroke-width", "0.5px");
+            })
+            .on("click", function(event, d) {
+                alert(`You clicked on ${d.properties.name}`);
+            });
+    </script>
+</body>
+</html>
