@@ -20,9 +20,17 @@ if uploaded_file is not None:
     if map_type == "Countries":
         data = df.set_index('Country')[selected_field].to_dict()
         geojson_file = "world_countries.json"
+        scale = 100
+        top_margin = 50
+        left_margin = 20
+        translate = [750 / 2, 500 / 1.5]
     else:
         data = df.set_index('State')[selected_field].to_dict()
         geojson_file = "us-states.json"
+        scale = 500
+        top_margin = 350
+        left_margin = 800
+        translate = [750 / 2, 500 / 2]
 
     # Create the button in Streamlit
     if st.button("Show Visualization"):
@@ -34,6 +42,10 @@ if uploaded_file is not None:
         d3_html = d3_html_template.replace("{{data}}", json.dumps(data))
         d3_html = d3_html.replace("{{geoJson}}", json.dumps(json.load(open(geojson_file))))
         d3_html = d3_html.replace("{{title}}", f"{selected_field} by {map_type}")
+        d3_html = d3_html.replace("{{scale}}", str(scale))
+        d3_html = d3_html.replace("{{top_margin}}", str(top_margin))
+        d3_html = d3_html.replace("{{left_margin}}", str(left_margin))
+        d3_html = d3_html.replace("{{translate}}", json.dumps(translate))
         
 
         # Embed the HTML that includes the D3 code in Streamlit
